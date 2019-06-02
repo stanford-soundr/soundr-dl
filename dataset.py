@@ -1,7 +1,8 @@
-import torch.utils.data.Dataset as Dataset
+import torch.utils.data
 import torch
 
-class AudioDataset(Dataset):
+
+class AudioDataset(torch.utils.data.Dataset):
     def __init__(self, X, y):
         # X: L x N x C
         # y: L x 3
