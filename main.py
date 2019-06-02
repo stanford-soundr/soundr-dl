@@ -12,7 +12,7 @@ from trainer import AudioTrainer
 mode = sys.argv[1]
 
 sample_num = 1280
-microphone_num = 14
+microphone_num = 7
 batch_size = 100
 
 val_size = 1000
@@ -24,6 +24,7 @@ if mode == "train":
         data_X, data_y = pickle.load(train_set_file)
 
     data_X = np.transpose(data_X, (0, 2, 1))
+    data_X = np.delete(data_X, [7, 8, 9, 10, 11, 12, 13], 1)
     data_y = np.delete(data_y, [3, 4, 5, 6], 1)
     total_size = data_X.shape[0]
     new_order = list(range(total_size))

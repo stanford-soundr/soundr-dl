@@ -17,6 +17,8 @@ class AudioTrainer:
     def train(self):
         while self.n_iter < self.max_step or True:
             for input, reference in self.train_loader:
+                if len(input) <= 1:
+                    continue
                 self.model.train()
                 output = self.model(input)
                 loss = self.criterion(output, reference)
