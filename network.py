@@ -18,8 +18,8 @@ class AudioNet(nn.Module):
         self.maxpool1 = nn.MaxPool1d(kernel_size=self.kernel1_size).to(device)
         self.n1 = int((self.n - self.kernel1_size + 1) / self.kernel1_size)
 
-        # self.conv2 = nn.Conv1d(in_channels=96, out_channels=96, kernel_size=self.kernel1_size).to(device)
-        # self.n2 = self.n1 - self.kernel1_size + 1
+        self.conv2 = nn.Conv1d(in_channels=96, out_channels=96, kernel_size=self.kernel1_size).to(device)
+        self.n2 = self.n1 - self.kernel1_size + 1
 
         self.conv3 = nn.Conv1d(in_channels=96, out_channels=128, kernel_size=self.kernel2_size).to(device)
         self.conv3_bn = nn.BatchNorm1d(128).to(device)
@@ -31,28 +31,28 @@ class AudioNet(nn.Module):
         self.maxpool4 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n4 = int((self.n3 - self.kernel2_size + 1) / self.kernel2_size)
 
-        # self.conv5 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel3_size).to(device)
-        # self.n5 = self.n4 - self.kernel3_size + 1
+        self.conv5 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel3_size).to(device)
+        self.n5 = self.n4 - self.kernel3_size + 1
 
-        self.mlp6 = nn.Linear(in_features=self.n4 * 128, out_features=500).to(device)
+        self.mlp6 = nn.Linear(in_features=self.n5 * 128, out_features=500).to(device)
         self.mlp6_bn = nn.BatchNorm1d(500).to(device)
         self.mlp7 = nn.Linear(in_features=500, out_features=3).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
     def forward(self, input):
-        conv1_output = F.relu(self.conv1(input))
-        conv1_bn_output = self.conv1_bn(conv1_output)
-        maxpool1_output = self.maxpool1(conv1_bn_output)
-        # conv2_output = self.conv2(maxpool1_output)
-        conv3_output = F.relu(self.conv3(maxpool1_output))
-        conv3_bn_output = self.conv3_bn(conv3_output)
-        maxpool3_output = self.maxpool3(conv3_bn_output)
-        conv4_output = F.relu(self.conv4(maxpool3_output))
-        conv4_bn_output = self.conv4_bn(conv4_output)
-        maxpool4_output = self.maxpool4(conv4_bn_output)
-        # conv5_output = self.conv5(maxpool4_output)
-        flatten_conv5_output = maxpool4_output.view(maxpool4_output.size(0), -1)
-        mlp6_output = self.dropout(F.relu(self.mlp6(flatten_conv5_output)))
-        mlp6_bn_output = self.mlp6_bn(mlp6_output)
-        mlp7_output = self.mlp7(mlp6_bn_output)
-        return mlp7_output
+        x = F.relu(self.conv1(input))
+        x = self.conv1_bn(x)
+        x = self.maxpool1(x)
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = self.conv3_bn(x)
+        x = self.maxpool3(x)
+        x = F.relu(self.conv4(x))
+        x = self.conv4_bn(x)
+        x = self.maxpool4(x)
+        x = F.relu(self.conv5(x))
+        x = x.view(x.size(0), -1)
+        x = self.dropout(F.relu(self.mlp6(x)))
+        x = self.mlp6_bn(x)
+        x = self.mlp7(x)
+        return x
