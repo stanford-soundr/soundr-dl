@@ -6,7 +6,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class AudioNet(nn.Module):
-    def __init__(self, sample_num, microphone_num):
+    def __init__(self, sample_num, microphone_num, output_num):
         super(AudioNet, self).__init__()
         self.n = sample_num
         self.kernel1_size = 7
@@ -24,7 +24,7 @@ class AudioNet(nn.Module):
         self.conv3 = nn.Conv1d(in_channels=96, out_channels=128, kernel_size=self.kernel2_size).to(device)
         self.conv3_bn = nn.BatchNorm1d(128).to(device)
         self.maxpool3 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
-        self.n3 = int((self.n1 - self.kernel2_size + 1) / self.kernel2_size)
+        self.n3 = int((self.n2 - self.kernel2_size + 1) / self.kernel2_size)
 
         self.conv4 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel2_size).to(device)
         self.conv4_bn = nn.BatchNorm1d(128).to(device)
@@ -34,9 +34,12 @@ class AudioNet(nn.Module):
         self.conv5 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel3_size).to(device)
         self.n5 = self.n4 - self.kernel3_size + 1
 
-        self.mlp6 = nn.Linear(in_features=self.n5 * 128, out_features=500).to(device)
+        self.conv5_1 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel3_size).to(device)
+        self.n5_1 = self.n5 - self.kernel3_size + 1
+
+        self.mlp6 = nn.Linear(in_features=self.n5_1 * 128, out_features=500).to(device)
         self.mlp6_bn = nn.BatchNorm1d(500).to(device)
-        self.mlp7 = nn.Linear(in_features=500, out_features=3).to(device)
+        self.mlp7 = nn.Linear(in_features=500, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
     def forward(self, input):
@@ -51,8 +54,13 @@ class AudioNet(nn.Module):
         x = self.conv4_bn(x)
         x = self.maxpool4(x)
         x = F.relu(self.conv5(x))
+        x = F.relu(self.conv5_1(x))
         x = x.view(x.size(0), -1)
         x = self.dropout(F.relu(self.mlp6(x)))
         x = self.mlp6_bn(x)
         x = self.mlp7(x)
+        pos = x[:, 0:3]
+        pre_quat = x[:, 3:7]
+        quat = F.tanh(pre_quat)
+        x = torch.cat((pos, quat), 1)
         return x

@@ -17,6 +17,7 @@ mode = sys.argv[1]
 sample_num = 1280
 microphone_num = 14
 batch_size = 100
+output_num = 7
 
 val_size = 1000
 
@@ -28,7 +29,8 @@ if mode == "train":
 
     data_X = np.transpose(data_X, (0, 2, 1))
     # data_X = np.delete(data_X, [7, 8, 9, 10, 11, 12, 13], 1)
-    data_y = np.delete(data_y, [3, 4, 5, 6], 1)
+    # data_y = np.delete(data_y, [3, 4, 5, 6], 1)
+    # data_y = np.concatenate((data_y[:, 0:3], data_y[:, 4:7], data_y[:, 3:4]), axis=1)
     total_size = data_X.shape[0]
     new_order = list(range(total_size))
     random.shuffle(new_order)
@@ -50,7 +52,7 @@ if mode == "train":
     train_loader = torch.utils.data.DataLoader(AudioDataset(train_X, train_y), batch_size=batch_size, shuffle=True)
     val_loader = torch.utils.data.DataLoader(AudioDataset(val_X, val_y), batch_size=batch_size)
 
-    model = AudioNet(sample_num, microphone_num)
+    model = AudioNet(sample_num, microphone_num, output_num)
     trainer = AudioTrainer(model, train_loader, val_loader)
     trainer.train()
     trainer.close("./train.json")
