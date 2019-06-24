@@ -24,7 +24,7 @@ val_size = 1000
 random.seed(24)
 
 if mode == "train":
-    with open("/home/jackie/Downloads/train_set2.pickle", "rb") as train_set_file:
+    with open("/home/soundr-share/train_set2.pickle", "rb") as train_set_file:
         data_X, data_y = pickle.load(train_set_file)
 
     data_X = np.transpose(data_X, (0, 2, 1))
