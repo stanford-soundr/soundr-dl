@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 mode = sys.argv[1]
 
-sample_num = 1280
+sample_num = 2560
 microphone_num = 14
 batch_size = 100
 output_num = 7
@@ -24,14 +24,14 @@ val_size = 1000
 random.seed(24)
 
 if mode == "train":
-    with open("/home/jackie/Downloads/train_set.pickle", "rb") as train_set_file:
+    with open("/home/jackie/Downloads/train_set2.pickle", "rb") as train_set_file:
         data_X, data_y = pickle.load(train_set_file)
 
     data_X = np.transpose(data_X, (0, 2, 1))
     # data_X = np.delete(data_X, [7, 8, 9, 10, 11, 12, 13], 1)
     # data_y = np.delete(data_y, [3, 4, 5, 6], 1)
     # data_y = np.concatenate((data_y[:, 0:3], data_y[:, 4:7], data_y[:, 3:4]), axis=1)
-    total_size = data_X.shape[0]
+    total_size = int(data_X.shape[0] / 1.8)
     new_order = list(range(total_size))
     random.shuffle(new_order)
     new_order = np.array(new_order)

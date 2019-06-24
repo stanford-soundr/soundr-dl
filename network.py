@@ -13,33 +13,33 @@ class AudioNet(nn.Module):
         self.kernel2_size = 5
         self.kernel3_size = 3
 
-        self.conv1 = nn.Conv1d(in_channels=microphone_num, out_channels=96, kernel_size=self.kernel1_size).to(device)
-        self.conv1_bn = nn.BatchNorm1d(96).to(device)
+        self.conv1 = nn.Conv1d(in_channels=microphone_num, out_channels=128, kernel_size=self.kernel1_size).to(device)
+        self.conv1_bn = nn.BatchNorm1d(128).to(device)
         self.maxpool1 = nn.MaxPool1d(kernel_size=self.kernel1_size).to(device)
         self.n1 = int((self.n - self.kernel1_size + 1) / self.kernel1_size)
 
-        self.conv2 = nn.Conv1d(in_channels=96, out_channels=96, kernel_size=self.kernel1_size).to(device)
+        self.conv2 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel1_size).to(device)
         self.n2 = self.n1 - self.kernel1_size + 1
 
-        self.conv3 = nn.Conv1d(in_channels=96, out_channels=128, kernel_size=self.kernel2_size).to(device)
-        self.conv3_bn = nn.BatchNorm1d(128).to(device)
+        self.conv3 = nn.Conv1d(in_channels=128, out_channels=192, kernel_size=self.kernel2_size).to(device)
+        self.conv3_bn = nn.BatchNorm1d(192).to(device)
         self.maxpool3 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n3 = int((self.n2 - self.kernel2_size + 1) / self.kernel2_size)
 
-        self.conv4 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel2_size).to(device)
-        self.conv4_bn = nn.BatchNorm1d(128).to(device)
+        self.conv4 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel2_size).to(device)
+        self.conv4_bn = nn.BatchNorm1d(192).to(device)
         self.maxpool4 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n4 = int((self.n3 - self.kernel2_size + 1) / self.kernel2_size)
 
-        self.conv5 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel3_size).to(device)
+        self.conv5 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
         self.n5 = self.n4 - self.kernel3_size + 1
 
-        self.conv5_1 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel3_size).to(device)
+        self.conv5_1 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
         self.n5_1 = self.n5 - self.kernel3_size + 1
 
-        self.mlp6 = nn.Linear(in_features=self.n5_1 * 128, out_features=500).to(device)
-        self.mlp6_bn = nn.BatchNorm1d(500).to(device)
-        self.mlp7 = nn.Linear(in_features=500, out_features=output_num).to(device)
+        self.mlp6 = nn.Linear(in_features=self.n5_1 * 192, out_features=700).to(device)
+        self.mlp6_bn = nn.BatchNorm1d(700).to(device)
+        self.mlp7 = nn.Linear(in_features=700, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
     def forward(self, input):
