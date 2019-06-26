@@ -38,6 +38,7 @@ class AudioTrainer:
         self.writer = SummaryWriter()
         self.n_iter = 0
 
+    #loss calculation function
     def criterion(self, output, reference):
         output_pos = output[:, 0:3]
         reference_pos = reference[:, 0:3]
