@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
 import numpy as np
+import datetime as dt
+import os
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -56,6 +58,10 @@ class AudioTrainer:
 
     def train(self):
         # torch.autograd.set_detect_anomaly(True)
+        output_parent_dir = "/home/soundr-share/checkpoints"
+        current_datetime = dt.datetime.now().strftime("%Y%m%dT%H%M%S")
+        output_dir = os.path.join(output_parent_dir, current_datetime)
+        os.mkdir(output_dir)
         while self.n_iter < self.max_step or True:
             for input, reference in self.train_loader:
                 if len(input) <= 1:
@@ -89,6 +95,14 @@ class AudioTrainer:
                 self.optimizer.step()
                 self.n_iter += 1
                 print(self.n_iter)
+
+                if self.n_iter % 10000 == 0:
+                    filename = os.path.join(output_dir, f"modelTrained_{self.n_iter}_{loss.cpu().detach().numpy()}.pickle")
+                    torch.save({'epoch': self.n_iter,
+                                'model_state_dict': self.model.state_dict(),
+                                'optimizer_state_dict': self.optimizer.state_dict(),
+                                'loss': loss}, filename)
+
 
                 if self.n_iter % 100 == 0:
                     plt.clf()
