@@ -1,25 +1,22 @@
-import torch
-import torch.nn as nn
-from tensorboardX import SummaryWriter
-import numpy as np
 import datetime as dt
 import os
 
-import seaborn as sns
-import matplotlib.pyplot as plt
-import quaternion
 import math
-
+import matplotlib.pyplot as plt
+import numpy as np
+import quaternion
+import seaborn as sns
+import torch
+import torch.nn as nn
 import torchgeometry.core
-
-import PIL.Image
-import io
-from torchvision.transforms import ToTensor
+from tensorboardX import SummaryWriter
 
 eps = 1e-8
 
+
 def quat_to_rot_mat(quat):
     return torchgeometry.angle_axis_to_rotation_matrix(torchgeometry.quaternion_to_angle_axis(quat))
+
 
 def quat_to_angle(quat):
     angle = quat.normalized().angle()
@@ -27,6 +24,7 @@ def quat_to_angle(quat):
         return 2 * math.pi - angle
     else:
         return angle
+
 
 class AudioTrainer:
     def __init__(self, model, train_loader, val_loader, max_step=10000000):
@@ -39,6 +37,7 @@ class AudioTrainer:
         self.optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-2)
         self.writer = SummaryWriter()
         self.n_iter = 0
+        self.min_avg_loss = math.inf
 
     def criterion(self, output, reference):
         output_pos = output[:, 0:3]
@@ -96,14 +95,6 @@ class AudioTrainer:
                 self.n_iter += 1
                 print(self.n_iter)
 
-                if self.n_iter % 10000 == 0:
-                    filename = os.path.join(output_dir, f"modelTrained_{self.n_iter}_{loss.cpu().detach().numpy()}.pickle")
-                    torch.save({'epoch': self.n_iter,
-                                'model_state_dict': self.model.state_dict(),
-                                'optimizer_state_dict': self.optimizer.state_dict(),
-                                'loss': loss}, filename)
-
-
                 if self.n_iter % 100 == 0:
                     plt.clf()
                     output_np = output.cpu().detach().numpy()
@@ -133,7 +124,6 @@ class AudioTrainer:
                             quat_loss = np.array([quat_loss_np])
                         else:
                             quat_loss = np.concatenate((quat_loss, [quat_loss_np]), axis=0)
-
 
                         error = (val_reference[:, 0:3] - val_output[:, 0:3])
                         error_dist = torch.sqrt(torch.sum(error ** 2, dim=1))
@@ -169,6 +159,17 @@ class AudioTrainer:
                     sns.scatterplot(result_y[:, 0], result_y[:, 2], linewidth=0)
                     self.writer.add_figure('val/output', plt.gcf(), self.n_iter)
                     plt.close()
+
+                    avg_loss = avg_loss_quat + avg_loss_pos
+                    if self.n_iter % 10000 == 0 or avg_loss < self.min_avg_loss:
+                        self.min_avg_loss = avg_loss
+                        filename = f"modelTrained_{self.n_iter}_{loss.cpu().detach().numpy()}.pickle"
+                        print(f"Creating checkpoint: {filename}")
+                        filepath = os.path.join(output_dir, filename)
+                        torch.save({'epoch': self.n_iter,
+                                    'model_state_dict': self.model.state_dict(),
+                                    'optimizer_state_dict': self.optimizer.state_dict(),
+                                    'loss': loss}, filepath)
 
     def close(self, path):
         self.writer.export_scalars_to_json(path)
