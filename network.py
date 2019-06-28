@@ -45,9 +45,13 @@ class AudioNet(nn.Module):
         self.conv5_1 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
         self.n5_1 = self.n5 - self.kernel3_size + 1
 
-        #layer 7 produces final output; dropout rate set to 1/2
+        # layer 7 produces final output; dropout rate set to 1/2
         self.mlp6 = nn.Linear(in_features=self.n5_1 * 192, out_features=700).to(device)
         self.mlp6_bn = nn.BatchNorm1d(700).to(device)
+
+        # add LSTM here
+        self.lstm = nn.LSTM(input_size=700,hidden_size=700,num_layers=2).to(device)
+
         self.mlp7 = nn.Linear(in_features=700, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
@@ -65,6 +69,8 @@ class AudioNet(nn.Module):
         x = self.maxpool4(x)
         x = F.relu(self.conv5(x))
         x = F.relu(self.conv5_1(x))
+        #lstm stuff
+        
         x = x.view(x.size(0), -1)
         x = self.dropout(F.relu(self.mlp6(x)))
         x = self.mlp6_bn(x)
