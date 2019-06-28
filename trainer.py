@@ -78,14 +78,10 @@ class AudioTrainer:
                 avg_train_error_dist = torch.mean(train_error_dist)
                 self.writer.add_scalar('train/avg_dist', avg_train_error_dist, self.n_iter)
 
-                train_quat = output[:, 3:7].cpu().detach().numpy()
+                train_quat = quaternion.as_quat_array(output[:, 3:7].cpu().detach().numpy())
                 reference_quat = quaternion.as_quat_array(reference[:, 3:7].cpu().detach().numpy())
-                train_quat[:, 0] = -train_quat[:, 0]
-                train_quat = quaternion.as_quat_array(train_quat)
+                train_quat = np.invert(train_quat)
                 train_quat_error = train_quat * reference_quat
-                # train_quat_error_roll = quaternion.as_quat_array(np.roll(quaternion.as_float_array(train_quat_error), 3, 1))
-                # train_quat_vector = quaternion.as_rotation_vector(train_quat_error)
-                # train_quat_error = np.sqrt(np.sum(train_quat_vector ** 2, axis=1))
                 train_quat_diff = np.array(list(map(quat_to_angle, train_quat_error)))
                 avg_train_quat_error = np.average(train_quat_diff)
                 self.writer.add_scalar('train/avg_angle', avg_train_quat_error, self.n_iter)
@@ -99,15 +95,25 @@ class AudioTrainer:
                 if self.n_iter % 100 == 0:
                     plt.clf()
                     output_np = output.cpu().detach().numpy()
-                    sns.scatterplot(output_np[:, 0], output_np[:, 2], linewidth=0)
-                    self.writer.add_figure('train/output', plt.gcf(), self.n_iter)
+                    reference_np = reference.cpu().detach().numpy()
+                    sns.scatterplot(reference_np[:, 0] - output_np[:, 0],
+                                    reference_np[:, 2] - output_np[:, 2],
+                                    linewidth=0)
+                    self.writer.add_figure('train/pos_diff', plt.gcf(), self.n_iter)
+                    plt.close()
+                    train_quat_vec = quaternion.rotate_vectors(train_quat_error, [0, 0, 1])
+                    plt.clf()
+                    sns.scatterplot(train_quat_vec[:, 0], train_quat_vec[:, 2], linewidth=0)
+                    self.writer.add_figure('train/quat_diff', plt.gcf(), self.n_iter)
                     plt.close()
                     self.model.eval()
                     result = None
                     result_quat = None
+                    result_quat_vec = None
                     pos_loss = None
                     quat_loss = None
                     result_y = None
+                    reference_y = None
                     for val_input, val_reference in self.train_loader:
                         val_output = self.model(val_input)
                         val_loss_pos, val_loss_quat = self.criterion(val_output, val_reference)
@@ -115,6 +121,12 @@ class AudioTrainer:
                             result_y = val_output.cpu().detach().numpy()
                         else:
                             result_y = np.concatenate((result_y, val_output.cpu().detach().numpy()), axis=0)
+
+                        if reference_y is None:
+                            reference_y = val_reference.cpu().detach().numpy()
+                        else:
+                            reference_y = np.concatenate((reference_y, val_reference.cpu().detach().numpy()), axis=0)
+
                         pos_loss_np = val_loss_pos.cpu().detach().numpy()
                         quat_loss_np = val_loss_quat.cpu().detach().numpy()
                         if pos_loss is None:
@@ -134,19 +146,21 @@ class AudioTrainer:
                         else:
                             result = np.concatenate((result, error_dist_np), axis=0)
 
-                        val_quat = val_output[:, 3:7].cpu().detach().numpy()
+                        val_quat = quaternion.as_quat_array(val_output[:, 3:7].cpu().detach().numpy())
                         val_reference_quat = quaternion.as_quat_array(val_reference[:, 3:7].cpu().detach().numpy())
-                        val_quat[:, 0] = - val_quat[:, 0]
-                        val_quat = quaternion.as_quat_array(val_quat)
+                        val_quat = np.invert(val_quat)
                         val_quat_error = val_quat * val_reference_quat
-                        # val_quat_error_roll = quaternion.as_quat_array(np.roll(quaternion.as_float_array(val_quat_error), 3, 1))
-                        # val_quat_vector = quaternion.as_rotation_vector(val_quat_error)
-                        # val_quat_error = np.sqrt(np.sum(val_quat_vector ** 2, axis=1))
                         val_quat_diff = np.array(list(map(quat_to_angle, val_quat_error)))
                         if result_quat is None:
                             result_quat = val_quat_diff
                         else:
                             result_quat = np.concatenate((result_quat, val_quat_diff), axis=0)
+
+                        val_quat_vec = quaternion.rotate_vectors(val_quat_error, [0, 0, 1])
+                        if result_quat_vec is None:
+                            result_quat_vec = val_quat_vec
+                        else:
+                            result_quat_vec = np.concatenate((result_quat_vec, val_quat_vec), axis=0)
 
                     avg_dist = np.average(result)
                     self.writer.add_scalar('val/avg_dist', avg_dist, self.n_iter)
@@ -157,8 +171,12 @@ class AudioTrainer:
                     avg_loss_quat = np.average(quat_loss)
                     self.writer.add_scalar('val/quat_loss', avg_loss_quat, self.n_iter)
                     plt.clf()
-                    sns.scatterplot(result_y[:, 0], result_y[:, 2], linewidth=0)
-                    self.writer.add_figure('val/output', plt.gcf(), self.n_iter)
+                    sns.scatterplot(reference_y[:, 0] - result_y[:, 0], reference_y[:, 2] - result_y[:, 2], linewidth=0)
+                    self.writer.add_figure('val/pos_diff', plt.gcf(), self.n_iter)
+                    plt.close()
+                    plt.clf()
+                    sns.scatterplot(result_quat_vec[:, 0], result_quat_vec[:, 2], linewidth=0)
+                    self.writer.add_figure('val/quat_diff', plt.gcf(), self.n_iter)
                     plt.close()
 
                     avg_loss = avg_loss_quat + avg_loss_pos
