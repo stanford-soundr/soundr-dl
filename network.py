@@ -55,8 +55,8 @@ class AudioNet(nn.Module):
         self.mlp7 = nn.Linear(in_features=700, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
-    #TODO: comment this section
-    def forward(self, input):
+    #the forward pass through the network built above
+    def forward(self, input, hidden):
         x = F.relu(self.conv1(input))
         x = self.conv1_bn(x)
         x = self.maxpool1(x)
@@ -69,11 +69,12 @@ class AudioNet(nn.Module):
         x = self.maxpool4(x)
         x = F.relu(self.conv5(x))
         x = F.relu(self.conv5_1(x))
-        #lstm stuff
-        
         x = x.view(x.size(0), -1)
         x = self.dropout(F.relu(self.mlp6(x)))
         x = self.mlp6_bn(x)
+
+        x, hidden = self.lstm(x,hidden)
+
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
