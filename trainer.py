@@ -63,13 +63,18 @@ class AudioTrainer:
         output_dir = os.path.join(output_parent_dir, current_datetime)
         os.mkdir(output_dir)
         while self.n_iter < self.max_step or True:
-            for input, reference in self.train_loader:
+            for test in self.train_loader:
+                input, reference = test
                 if len(input) <= 1:
                     continue
                 self.model.train()
+                input = torch.nn.utils.rnn.pack_sequence(input, enforce_sorted=False)
+                reference = torch.nn.utils.rnn.pack_sequence(reference, enforce_sorted=False)
                 output = self.model(input)
+                output = output.data
+                reference = reference.data
                 pos_loss, quat_loss = self.criterion(output, reference)
-                loss = pos_loss + quat_loss
+                loss = quat_loss
                 self.writer.add_scalar('train/pos_loss', pos_loss, self.n_iter)
                 self.writer.add_scalar('train/quat_loss', quat_loss, self.n_iter)
 
@@ -109,7 +114,11 @@ class AudioTrainer:
                     quat_loss = None
                     result_y = None
                     for val_input, val_reference in self.train_loader:
+                        val_input = torch.nn.utils.rnn.pack_sequence(val_input, enforce_sorted=False)
+                        val_reference = torch.nn.utils.rnn.pack_sequence(val_reference, enforce_sorted=False)
                         val_output = self.model(val_input)
+                        val_output = val_output.data
+                        val_reference = val_reference.data
                         val_loss_pos, val_loss_quat = self.criterion(val_output, val_reference)
                         if result_y is None:
                             result_y = val_output.cpu().detach().numpy()

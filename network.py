@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+from torch.nn.utils.rnn import PackedSequence
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -50,14 +51,20 @@ class AudioNet(nn.Module):
         self.mlp6_bn = nn.BatchNorm1d(700).to(device)
 
         # add LSTM here
-        self.lstm = nn.LSTM(input_size=700,hidden_size=700,num_layers=2).to(device)
+        self.lstm = nn.LSTM(input_size=700, hidden_size=700, num_layers=2).to(device)
+        for name, param in self.lstm.named_parameters():
+            if 'bias' in name:
+                nn.init.constant(param, 0.0)
+            elif 'weight' in name:
+                nn.init.xavier_normal(param)
 
         self.mlp7 = nn.Linear(in_features=700, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
-    #the forward pass through the network built above
-    def forward(self, input, hidden):
-        x = F.relu(self.conv1(input))
+    # TODO: need to implement for single tensor as well
+    def forward(self, input: PackedSequence) -> PackedSequence:
+        x = input.data
+        x = F.relu(self.conv1(x))
         x = self.conv1_bn(x)
         x = self.maxpool1(x)
         x = F.relu(self.conv2(x))
@@ -72,12 +79,13 @@ class AudioNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.dropout(F.relu(self.mlp6(x)))
         x = self.mlp6_bn(x)
-
-        x, hidden = self.lstm(x,hidden)
-
+        lstm_input = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
+        lstm_output, _ = self.lstm(lstm_input)  # Throw away output `hidden`
+        x = lstm_output.data
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
         quat = F.tanh(pre_quat)
         x = torch.cat((pos, quat), 1)
-        return x
+        output = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
+        return output
