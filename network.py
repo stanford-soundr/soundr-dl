@@ -19,31 +19,37 @@ class AudioNet(nn.Module):
         # that maintains the mean activation close to 0 and the activation standard deviation close to 1.
         #MaxPool: summarizes convolutional layer, keeps num of params low
         self.conv1 = nn.Conv1d(in_channels=microphone_num, out_channels=128, kernel_size=self.kernel1_size).to(device)
+        torch.nn.init.xavier_uniform(self.conv1.weight)
         self.conv1_bn = nn.BatchNorm1d(128).to(device)
         self.maxpool1 = nn.MaxPool1d(kernel_size=self.kernel1_size).to(device)
         self.n1 = int((self.n - self.kernel1_size + 1) / self.kernel1_size)
 
         #layer 2 only has a convolution operation; input: 128 and output: 128
         self.conv2 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel1_size).to(device)
+        torch.nn.init.xavier_uniform(self.conv2.weight)
         self.n2 = self.n1 - self.kernel1_size + 1
 
         #layer 3 convolves, normalizes, and maximizes; input: 128 and output: 192
         self.conv3 = nn.Conv1d(in_channels=128, out_channels=192, kernel_size=self.kernel2_size).to(device)
+        torch.nn.init.xavier_uniform(self.conv3.weight)
         self.conv3_bn = nn.BatchNorm1d(192).to(device)
         self.maxpool3 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n3 = int((self.n2 - self.kernel2_size + 1) / self.kernel2_size)
 
         #layer 4 is similar to layer 3; input: 192 and output: 192
         self.conv4 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel2_size).to(device)
+        torch.nn.init.xavier_uniform(self.conv4.weight)
         self.conv4_bn = nn.BatchNorm1d(192).to(device)
         self.maxpool4 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n4 = int((self.n3 - self.kernel2_size + 1) / self.kernel2_size)
 
         #layer 5 has only a convolutional layer with input: 192 and output: 192
         self.conv5 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
+        torch.nn.init.xavier_uniform(self.conv5.weight)
         self.n5 = self.n4 - self.kernel3_size + 1
 
         self.conv5_1 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
+        torch.nn.init.xavier_uniform(self.conv5_1.weight)
         self.n5_1 = self.n5 - self.kernel3_size + 1
 
         # layer 7 produces final output; dropout rate set to 1/2
