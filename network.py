@@ -47,18 +47,18 @@ class AudioNet(nn.Module):
         self.n5_1 = self.n5 - self.kernel3_size + 1
 
         # layer 7 produces final output; dropout rate set to 1/2
-        self.mlp6 = nn.Linear(in_features=self.n5_1 * 192, out_features=700).to(device)
-        self.mlp6_bn = nn.BatchNorm1d(700).to(device)
+        self.mlp6 = nn.Linear(in_features=self.n5_1 * 192, out_features=1400).to(device)
+        self.mlp6_bn = nn.BatchNorm1d(1400).to(device)
 
         # add LSTM here
-        self.lstm = nn.LSTM(input_size=700, hidden_size=700, num_layers=2).to(device)
+        self.lstm = nn.LSTM(input_size=1400, hidden_size=1400, num_layers=2).to(device)
         for name, param in self.lstm.named_parameters():
             if 'bias' in name:
                 nn.init.constant(param, 0.0)
             elif 'weight' in name:
                 nn.init.xavier_normal(param)
 
-        self.mlp7 = nn.Linear(in_features=700, out_features=output_num).to(device)
+        self.mlp7 = nn.Linear(in_features=1400, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
     # TODO: need to implement for single tensor as well
