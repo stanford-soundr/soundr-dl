@@ -35,7 +35,7 @@ class AudioNet(nn.Module):
 
         #layer 4 is similar to layer 3; input: 192 and output: 192
         self.conv4 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel2_size).to(device)
-        self.conv4_bn = nn.BatchNorm1d(192).to(device)
+        self.conv4_bn = nn.BatchNorm1d(192).to(device)#does this need to change to match output size? was 192
         self.maxpool4 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n4 = int((self.n3 - self.kernel2_size + 1) / self.kernel2_size)
 
