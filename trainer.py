@@ -25,6 +25,11 @@ def quat_to_angle(quat):
     else:
         return angle
 
+def cart2pol(x, y):
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    return(rho, phi)
+
 
 class AudioTrainer:
     def __init__(self, model, train_loader, val_loader, max_step=10000000):
@@ -101,14 +106,22 @@ class AudioTrainer:
                     plt.clf()
                     output_np = output.cpu().detach().numpy()
                     reference_np = reference.cpu().detach().numpy()
-                    sns.scatterplot(reference_np[:, 0] - output_np[:, 0],
-                                    reference_np[:, 2] - output_np[:, 2],
-                                    linewidth=0)
+                    sns.kdeplot(reference_np[:, 0] - output_np[:, 0],
+                                reference_np[:, 2] - output_np[:, 2],
+                                shade=True)
+                    plt.xlim(-1.5, 1.5)
+                    plt.ylim(-1.5, 1.5)
                     self.writer.add_figure('train/pos_diff', plt.gcf(), self.n_iter)
                     plt.close()
                     train_quat_vec = quaternion.rotate_vectors(train_quat_error, [0, 0, 1])
                     plt.clf()
-                    sns.scatterplot(train_quat_vec[:, 0], train_quat_vec[:, 2], linewidth=0)
+                    # sns.scatterplot(train_quat_vec[:, 0], train_quat_vec[:, 2], linewidth=0)
+                    ax = plt.subplot(111, polar=True)
+                    rho, phi = cart2pol(train_quat_vec[:, 2], train_quat_vec[:, 0])
+                    ax.scatter(x=phi, y=rho)
+                    ax.set_theta_zero_location('N')
+                    ax.set_theta_direction(-1)
+                    plt.ylim(0, 1)
                     self.writer.add_figure('train/quat_diff', plt.gcf(), self.n_iter)
                     plt.close()
                     self.model.eval()
@@ -180,11 +193,19 @@ class AudioTrainer:
                     avg_loss_quat = np.average(quat_loss)
                     self.writer.add_scalar('val/quat_loss', avg_loss_quat, self.n_iter)
                     plt.clf()
-                    sns.scatterplot(reference_y[:, 0] - result_y[:, 0], reference_y[:, 2] - result_y[:, 2], linewidth=0)
+                    sns.kdeplot(reference_y[:, 0] - result_y[:, 0], reference_y[:, 2] - result_y[:, 2], shade=True)
+                    plt.xlim(-1.5, 1.5)
+                    plt.ylim(-1.5, 1.5)
                     self.writer.add_figure('val/pos_diff', plt.gcf(), self.n_iter)
                     plt.close()
                     plt.clf()
-                    sns.scatterplot(result_quat_vec[:, 0], result_quat_vec[:, 2], linewidth=0)
+                    # sns.scatterplot(result_quat_vec[:, 0], result_quat_vec[:, 2], linewidth=0)
+                    ax = plt.subplot(111, polar=True)
+                    rho, phi = cart2pol(result_quat_vec[:, 2], result_quat_vec[:, 0])
+                    ax.scatter(x=phi, y=rho)
+                    ax.set_theta_zero_location('N')
+                    ax.set_theta_direction(-1)
+                    plt.ylim(0, 1)
                     self.writer.add_figure('val/quat_diff', plt.gcf(), self.n_iter)
                     plt.close()
 
