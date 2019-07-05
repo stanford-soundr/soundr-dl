@@ -43,15 +43,15 @@ class AudioNet(nn.Module):
         self.conv5 = nn.Conv1d(in_channels=1024, out_channels=2048, kernel_size=self.kernel3_size).to(device)
         self.n5 = self.n4 - self.kernel3_size + 1
 
-        self.conv5_1 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
-        self.n5_1 = self.n5 - self.kernel3_size + 1
+        #self.conv5_1 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
+        #self.n5_1 = self.n5 - self.kernel3_size + 1
 
         # layer 7 produces final output; dropout rate set to 1/2; multiplier is out channels of prev layer
-        self.mlp6 = nn.Linear(in_features=self.n5_1 * 2048, out_features=700).to(device)
-        self.mlp6_bn = nn.BatchNorm1d(700).to(device)
+        self.mlp6 = nn.Linear(in_features=self.n5_1 * 2048, out_features=1400).to(device)
+        self.mlp6_bn = nn.BatchNorm1d(1400).to(device)
 
         # add LSTM here
-        self.lstm = nn.LSTM(input_size=700, hidden_size=700, num_layers=2).to(device)
+        self.lstm = nn.LSTM(input_size=1400, hidden_size=1400, num_layers=2).to(device)
         for name, param in self.lstm.named_parameters():
             if 'bias' in name:
                 nn.init.constant(param, 0.0)
