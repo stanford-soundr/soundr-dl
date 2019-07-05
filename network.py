@@ -24,30 +24,30 @@ class AudioNet(nn.Module):
         self.n1 = int((self.n - self.kernel1_size + 1) / self.kernel1_size)
 
         #layer 2 only has a convolution operation; input: 128 and output: 128
-        self.conv2 = nn.Conv1d(in_channels=128, out_channels=128, kernel_size=self.kernel1_size).to(device)
+        self.conv2 = nn.Conv1d(in_channels=128, out_channels=256, kernel_size=self.kernel1_size).to(device)
         self.n2 = self.n1 - self.kernel1_size + 1
 
         #layer 3 convolves, normalizes, and maximizes; input: 128 and output: 192
-        self.conv3 = nn.Conv1d(in_channels=128, out_channels=192, kernel_size=self.kernel2_size).to(device)
-        self.conv3_bn = nn.BatchNorm1d(192).to(device)
+        self.conv3 = nn.Conv1d(in_channels=256, out_channels=512, kernel_size=self.kernel2_size).to(device)
+        self.conv3_bn = nn.BatchNorm1d(512).to(device)#changed from 192
         self.maxpool3 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n3 = int((self.n2 - self.kernel2_size + 1) / self.kernel2_size)
 
         #layer 4 is similar to layer 3; input: 192 and output: 192
-        self.conv4 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel2_size).to(device)
-        self.conv4_bn = nn.BatchNorm1d(192).to(device)#does this need to change to match output size? was 192
+        self.conv4 = nn.Conv1d(in_channels=512, out_channels=1024, kernel_size=self.kernel2_size).to(device)
+        self.conv4_bn = nn.BatchNorm1d(1024).to(device)#does this need to change to match output size? was 192
         self.maxpool4 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n4 = int((self.n3 - self.kernel2_size + 1) / self.kernel2_size)
 
         #layer 5 has only a convolutional layer with input: 192 and output: 192
-        self.conv5 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
+        self.conv5 = nn.Conv1d(in_channels=1024, out_channels=2048, kernel_size=self.kernel3_size).to(device)
         self.n5 = self.n4 - self.kernel3_size + 1
 
         self.conv5_1 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
         self.n5_1 = self.n5 - self.kernel3_size + 1
 
-        # layer 7 produces final output; dropout rate set to 1/2
-        self.mlp6 = nn.Linear(in_features=self.n5_1 * 192, out_features=700).to(device)
+        # layer 7 produces final output; dropout rate set to 1/2; multiplier is out channels of prev layer
+        self.mlp6 = nn.Linear(in_features=self.n5_1 * 2048, out_features=700).to(device)
         self.mlp6_bn = nn.BatchNorm1d(700).to(device)
 
         # add LSTM here
