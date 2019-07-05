@@ -4,16 +4,16 @@ import torch
 
 class AudioDataset(torch.utils.data.Dataset):
     def __init__(self, X, y):
-        # X: L x N x C
-        # y: L x 3
-        # (L: total data point count, N: sample number, C: microphone number)
-        assert X.size(0) == y.size(0)
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.X = X.to(device)
-        self.y = y.to(device)
+        # X: L x S x N x C
+        # y: L x S x 3
+        # (L: total sequence count, S: sequence length, N: sample number, C: microphone number)
+        assert X.shape[0] == y.shape[0]
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.X = X
+        self.y = y
 
     def __getitem__(self, index):
-        return (self.X[index], self.y[index])
+        return torch.Tensor(self.X[index]).to(self.device), torch.Tensor(self.y[index]).to(self.device)
 
     def __len__(self):
-        return self.y.size(0)
+        return self.y.shape[0]

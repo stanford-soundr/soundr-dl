@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+from torch.nn.utils.rnn import PackedSequence
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -34,7 +35,7 @@ class AudioNet(nn.Module):
 
         #layer 4 is similar to layer 3; input: 192 and output: 192
         self.conv4 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel2_size).to(device)
-        self.conv4_bn = nn.BatchNorm1d(192).to(device)
+        self.conv4_bn = nn.BatchNorm1d(192).to(device)#does this need to change to match output size? was 192
         self.maxpool4 = nn.MaxPool1d(kernel_size=self.kernel2_size).to(device)
         self.n4 = int((self.n3 - self.kernel2_size + 1) / self.kernel2_size)
 
@@ -45,15 +46,25 @@ class AudioNet(nn.Module):
         self.conv5_1 = nn.Conv1d(in_channels=192, out_channels=192, kernel_size=self.kernel3_size).to(device)
         self.n5_1 = self.n5 - self.kernel3_size + 1
 
-        #layer 7 produces final output; dropout rate set to 1/2
-        self.mlp6 = nn.Linear(in_features=self.n5_1 * 192, out_features=700).to(device)
-        self.mlp6_bn = nn.BatchNorm1d(700).to(device)
-        self.mlp7 = nn.Linear(in_features=700, out_features=output_num).to(device)
+        # layer 7 produces final output; dropout rate set to 1/2
+        self.mlp6 = nn.Linear(in_features=self.n5_1 * 192, out_features=1400).to(device)
+        self.mlp6_bn = nn.BatchNorm1d(1400).to(device)
+
+        # add LSTM here
+        self.lstm = nn.LSTM(input_size=1400, hidden_size=1400, num_layers=2).to(device)
+        for name, param in self.lstm.named_parameters():
+            if 'bias' in name:
+                nn.init.constant(param, 0.0)
+            elif 'weight' in name:
+                nn.init.xavier_normal(param)
+
+        self.mlp7 = nn.Linear(in_features=1400, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
-    #TODO: comment this section
-    def forward(self, input):
-        x = F.relu(self.conv1(input))
+    # TODO: need to implement for single tensor as well
+    def forward(self, input: PackedSequence) -> PackedSequence:
+        x = input.data
+        x = F.relu(self.conv1(x))
         x = self.conv1_bn(x)
         x = self.maxpool1(x)
         x = F.relu(self.conv2(x))
@@ -68,9 +79,13 @@ class AudioNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.dropout(F.relu(self.mlp6(x)))
         x = self.mlp6_bn(x)
+        lstm_input = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
+        lstm_output, _ = self.lstm(lstm_input)  # Throw away output `hidden`
+        x = lstm_output.data
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
         quat = F.tanh(pre_quat)
         x = torch.cat((pos, quat), 1)
-        return x
+        output = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
+        return output
