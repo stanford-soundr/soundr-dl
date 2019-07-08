@@ -58,4 +58,22 @@ if mode == "train":
     trainer.close("./train.json")
 
 elif mode == "test":
-    raise NotImplemented
+    with open("/home/soundr-share/train_set2.pickle", "rb") as train_set_file:
+        data_X, data_y = pickle.load(train_set_file)
+    with open("/home/soundr-share/checkpoints/20190626T164421/modelTrained_560000_0.8386740684509277.pickle", "rb") as model_file:
+        checkpoint = torch.load(model_file)
+
+    data_X = np.transpose(data_X, (0, 2, 1))
+    model = AudioNet(sample_num, microphone_num, output_num)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model.eval()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    test_data = torch.Tensor(data_X[0:1]).to(device)
+    output = model(test_data)
+    prediction = output
+    print(prediction)
+
+
+
+
+
