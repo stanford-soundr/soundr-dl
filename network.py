@@ -101,6 +101,7 @@ class AudioNet(nn.Module):
         # lstm_input = x.view(1, x.size(0), x.size(1))
         # lstm_output, hidden_output = self.lstm(lstm_input, hidden)  # Throw away output `hidden`
         # x = lstm_output[0]
+        hidden_output = None
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
