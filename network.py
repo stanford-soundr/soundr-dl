@@ -84,9 +84,9 @@ class AudioNet(nn.Module):
     def forward_seq(self, input: PackedSequence) -> PackedSequence:
         x = input.data
         x = self.forward_cnn(x)
-        lstm_input = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
-        lstm_output, _ = self.lstm(lstm_input)  # Throw away output `hidden`
-        x = lstm_output.data
+        # lstm_input = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
+        # lstm_output, _ = self.lstm(lstm_input)  # Throw away output `hidden`
+        # x = lstm_output.data
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
@@ -98,9 +98,9 @@ class AudioNet(nn.Module):
     def forward_single(self, input: torch.Tensor, hidden: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         x = input
         x = self.forward_cnn(x)
-        lstm_input = x.view(1, x.size(0), x.size(1))
-        lstm_output, hidden_output = self.lstm(lstm_input, hidden)  # Throw away output `hidden`
-        x = lstm_output[0]
+        # lstm_input = x.view(1, x.size(0), x.size(1))
+        # lstm_output, hidden_output = self.lstm(lstm_input, hidden)  # Throw away output `hidden`
+        # x = lstm_output[0]
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
