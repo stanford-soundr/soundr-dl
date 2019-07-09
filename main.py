@@ -6,19 +6,14 @@ import numpy as np
 import torch.utils.data
 from torch.utils.data import DataLoader
 
-from .dataset import AudioDataset
-from .network import AudioNet
-from .trainer import AudioTrainer
+from dataset import AudioDataset
+from network import AudioNet
+from trainer import AudioTrainer
 
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-sample_num = 4800
-microphone_num = 14
-batch_size = 10
-output_num = 7
-
-val_size = 1000
+from params import *
 
 random.seed(24)
 
