@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
@@ -61,9 +63,7 @@ class AudioNet(nn.Module):
         self.mlp7 = nn.Linear(in_features=1400, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
-    # TODO: need to implement for single tensor as well
-    def forward(self, input: PackedSequence) -> PackedSequence:
-        x = input.data
+    def forward_cnn(self, x: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.conv1(x))
         x = self.conv1_bn(x)
         x = self.maxpool1(x)
@@ -79,6 +79,11 @@ class AudioNet(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.dropout(F.relu(self.mlp6(x)))
         x = self.mlp6_bn(x)
+        return x
+
+    def forward_seq(self, input: PackedSequence) -> PackedSequence:
+        x = input.data
+        x = self.forward_cnn(x)
         lstm_input = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
         lstm_output, _ = self.lstm(lstm_input)  # Throw away output `hidden`
         x = lstm_output.data
@@ -89,3 +94,23 @@ class AudioNet(nn.Module):
         x = torch.cat((pos, quat), 1)
         output = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
         return output
+
+    def forward_single(self, input: torch.Tensor, hidden: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        x = input
+        x = self.forward_cnn(x)
+        lstm_input = x.view(1, x.size(0), x.size(1))
+        lstm_output, hidden_output = self.lstm(lstm_input, hidden)  # Throw away output `hidden`
+        x = lstm_output[0]
+        x = self.mlp7(x)
+        pos = x[:, 0:3]
+        pre_quat = x[:, 3:7]
+        quat = F.tanh(pre_quat)
+        x = torch.cat((pos, quat), 1)
+        output = x
+        return hidden_output, output
+
+    def forward(self, input, hidden=None):
+        if isinstance(input, PackedSequence):
+            return self.forward_seq(input)
+        elif isinstance(input, torch.Tensor):
+            return self.forward_single(input, hidden)
