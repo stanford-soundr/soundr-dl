@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
         total_size = int(data_X.shape[0])
         new_order = list(range(total_size))
-        random.shuffle(new_order)
+        # random.shuffle(new_order)
         new_order = np.array(new_order)
         train_X = data_X[new_order[range(0, total_size - val_size)]]
         train_y = data_y[new_order[range(0, total_size - val_size)]]
