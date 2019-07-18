@@ -90,7 +90,7 @@ class AudioNet(nn.Module):
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
-        quat = F.tanh(pre_quat)
+        quat = torch.tanh(pre_quat)
         x = torch.cat((pos, quat), 1)
         output = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
         return output
@@ -104,7 +104,7 @@ class AudioNet(nn.Module):
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
-        quat = F.tanh(pre_quat)
+        quat = torch.tanh(pre_quat)
         x = torch.cat((pos, quat), 1)
         output = x
         return hidden_output, output
