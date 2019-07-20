@@ -53,7 +53,8 @@ class AudioNet(nn.Module):
         self.mlp6_bn = nn.BatchNorm1d(1400).to(device)
 
         # add LSTM here
-        self.lstm = nn.LSTM(input_size=1400, hidden_size=1400, num_layers=2).to(device)
+        #self.lstm = nn.LSTM(input_size=1400, hidden_size=1400, num_layers=2, batch_first=False).to(device) #20190719T234945
+        self.lstm = nn.LSTM(input_size=1400, hidden_size=1400, num_layers=2, batch_first=True).to(device)
         for name, param in self.lstm.named_parameters():
             if 'bias' in name:
                 nn.init.constant(param, 0.0)

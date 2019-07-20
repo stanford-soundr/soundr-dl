@@ -29,7 +29,7 @@ def collate_data(array):
 if __name__ == "__main__":
     mode = sys.argv[1]
     if mode == "train":
-        training_data = np.load("/home/soundr-share/train_set3.npy", allow_pickle=True)
+        training_data = np.load("/home/soundr-share/train_set3.1.npy", allow_pickle=True)
         data_X = training_data[0]
         data_y = training_data[1]
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         trainer.close("./train.json")
 
     elif mode == "test":
-        training_data = np.load("/home/soundr-share/train_set3.npy", allow_pickle=True)
+        training_data = np.load("/home/soundr-share/train_set3.1.npy", allow_pickle=True)
         data_X = training_data[0]
         data_y = training_data[1]
         with open("/home/soundr_dl-share/checkpoints/20190626T164421/modelTrained_560000_0.8386740684509277.pickle", "rb") as model_file:
