@@ -61,7 +61,7 @@ class AudioNet(nn.Module):
             elif 'weight' in name:
                 nn.init.xavier_normal(param)
 
-        self.mlp7 = nn.Linear(in_features=1400, out_features=output_num).to(device)
+        self.mlp7 = nn.Linear(in_features=2800, out_features=output_num).to(device)
         self.dropout = nn.Dropout(p=0.5).to(device) # the dropout module will be automatically turned off in evaluation mode
 
     def forward_cnn(self, x: torch.Tensor) -> torch.Tensor:
@@ -87,7 +87,7 @@ class AudioNet(nn.Module):
         x = self.forward_cnn(x)
         lstm_input = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
         lstm_output, _ = self.lstm(lstm_input)  # Throw away output `hidden`
-        x = lstm_output.data
+        x = torch.cat((x, lstm_output.data), 1)
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
@@ -101,7 +101,7 @@ class AudioNet(nn.Module):
         x = self.forward_cnn(x)
         lstm_input = x.view(1, x.size(0), x.size(1))
         lstm_output, hidden_output = self.lstm(lstm_input, hidden)  # Throw away output `hidden`
-        x = lstm_output[0]
+        x = torch.cat((lstm_output[0], lstm_output.data), 1)
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
