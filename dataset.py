@@ -13,7 +13,7 @@ class AudioDataset(torch.utils.data.Dataset):
         self.y = y
 
     def __getitem__(self, index):
-        return torch.Tensor(self.X[index]).to(self.device), torch.Tensor(self.y[index]).to(self.device)
+        return torch.Tensor(self.X[index][:, 0:7]).to(self.device), torch.Tensor(self.y[index]).to(self.device)
 
     def __len__(self):
         return self.y.shape[0]
