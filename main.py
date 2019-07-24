@@ -29,9 +29,12 @@ def collate_data(array):
 if __name__ == "__main__":
     mode = sys.argv[1]
     if mode == "train":
-        training_data = np.load("/home/soundr-share/train_set3.1.npy", allow_pickle=True)
-        data_X = training_data[0]
-        data_y = training_data[1]
+        # training_data = np.load("/home/soundr-share/train_set3.1.npy", allow_pickle=True)
+        # data_X = training_data[0]
+        # data_y = training_data[1]
+
+        data_X = np.load("/home/soundr-share/train_set4_input.npy", allow_pickle=True)
+        data_y = np.load("/home/soundr-share/train_set4_output.npy", allow_pickle=True)
 
         total_size = int(data_X.shape[0])
         new_order = list(range(total_size))
