@@ -96,12 +96,13 @@ class AudioNet(nn.Module):
         output = PackedSequence(x, input.batch_sizes, input.sorted_indices, input.unsorted_indices)
         return output
 
+    # TODO: verify this function is the same as :func:`<forward_seq>`
     def forward_single(self, input: torch.Tensor, hidden: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         x = input
         x = self.forward_cnn(x)
         lstm_input = x.view(1, x.size(0), x.size(1))
         lstm_output, hidden_output = self.lstm(lstm_input, hidden)  # Throw away output `hidden`
-        x = torch.cat((lstm_output[0], lstm_output.data), 1)
+        x = torch.cat((lstm_input[0], lstm_output[0]), 1)
         x = self.mlp7(x)
         pos = x[:, 0:3]
         pre_quat = x[:, 3:7]
