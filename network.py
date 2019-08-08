@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -97,7 +97,7 @@ class AudioNet(nn.Module):
         return output
 
     # TODO: verify this function is the same as :func:`<forward_seq>`
-    def forward_single(self, input: torch.Tensor, hidden: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward_single(self, input: torch.Tensor, hidden: Optional[torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         x = input
         x = self.forward_cnn(x)
         lstm_input = x.view(1, x.size(0), x.size(1))
