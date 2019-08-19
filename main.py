@@ -33,8 +33,8 @@ if __name__ == "__main__":
         # data_X = training_data[0]
         # data_y = training_data[1]
 
-        data_X = np.load("/home/soundr-share/train_set10_input.npy", allow_pickle=True)
-        data_y = np.load("/home/soundr-share/train_set10_output.npy", allow_pickle=True)
+        data_X = np.load("/home/soundr-share/train_set13_input.npy", allow_pickle=True)
+        data_y = np.load("/home/soundr-share/train_set13_output.npy", allow_pickle=True)
 
         total_size = int(data_X.shape[0])
         print(total_size)

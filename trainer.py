@@ -39,7 +39,7 @@ class AudioTrainer:
         self.max_step = max_step
         # self.criterion = nn.MSELoss()
         self.pos_criterion = nn.MSELoss()
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-2)
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=0.00001, weight_decay=1e-2)
         self.writer = SummaryWriter()
         self.n_iter = 0
         self.min_avg_loss = math.inf
